@@ -9,10 +9,7 @@ import {
   Lock,
   QrCode,
   ArrowRight,
-  Sparkles,
   HelpCircle,
-  FileCheck,
-  Check,
 } from "lucide-react";
 import { eventConfig } from "@/config/eventConfig";
 

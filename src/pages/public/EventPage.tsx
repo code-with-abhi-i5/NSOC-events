@@ -2,8 +2,6 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { motion } from "framer-motion";
 import {
-  Calendar,
-  Users,
   Award,
   Globe,
   Mail,
@@ -11,13 +9,10 @@ import {
   Shield,
   Sparkles,
   Clock,
-  MapPin,
-  CheckCircle2,
   Code2,
   Cpu,
   Terminal,
   Zap,
-  ChevronRight,
   Search,
 } from "lucide-react";
 import { eventConfig } from "@/config/eventConfig";

@@ -14,10 +14,6 @@ import {
   ChevronDown,
   Lock,
   QrCode,
-  CheckCircle2,
-  FileCheck,
-  Layers,
-  Cpu,
 } from "lucide-react";
 import { eventConfig } from "@/config/eventConfig";
 import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
