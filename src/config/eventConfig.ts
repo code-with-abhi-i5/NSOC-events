@@ -11,7 +11,7 @@ export const eventConfig = {
 
   // Branding
   logo: "/nsoc-logo.svg",
-  website: "https://nsoc.dev",
+  website: "https://nsoc-events.vercel.app",
   primaryColor: "#6366f1", // Indigo-500
   accentColor: "#8b5cf6", // Violet-500
 
@@ -21,7 +21,7 @@ export const eventConfig = {
 
   // Verification
   verificationDomain:
-    import.meta.env.VITE_VERIFICATION_DOMAIN || "http://localhost:5173",
+    import.meta.env.VITE_VERIFICATION_DOMAIN || "https://nsoc-events.vercel.app",
 
   // Contact
   contactEmail: "team@nsoc.dev",

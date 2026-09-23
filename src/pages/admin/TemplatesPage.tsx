@@ -44,7 +44,7 @@ export default function TemplatesPage() {
 
   // Generate valid sample QR code
   useEffect(() => {
-    QRCode.toDataURL(`https://nsoc.dev/verify/${sampleCertId}`, {
+    QRCode.toDataURL(`https://nsoc-events.vercel.app/verify/${sampleCertId}`, {
       width: 250,
       margin: 1,
       color: { dark: "#000000", light: "#ffffff" },

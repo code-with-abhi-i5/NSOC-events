@@ -94,7 +94,12 @@ npm run dev
 ```
 Open [http://localhost:5173](http://localhost:5173) in your browser.
 
-### 4. Build for Production
+### 4. Live Production URL
+- **Production Website**: [https://nsoc-events.vercel.app](https://nsoc-events.vercel.app)
+- **Certificate Verification Terminal**: [https://nsoc-events.vercel.app/verify](https://nsoc-events.vercel.app/verify)
+- **Admin Portal**: [https://nsoc-events.vercel.app/admin/login](https://nsoc-events.vercel.app/admin/login)
+
+### 5. Build for Production
 ```bash
 npm run build
 ```
@@ -103,15 +108,12 @@ npm run build
 
 ## 🔐 Demo Credentials & Verification Identifiers
 
-For testing without live Firebase setup:
-- **Admin Login**: [http://localhost:5173/admin/login](http://localhost:5173/admin/login)
+- **Admin Login**: [https://nsoc-events.vercel.app/admin/login](https://nsoc-events.vercel.app/admin/login)
   - Pre-filled: `admin@nsoc.dev` (or click *Sign In* / *Continue with Google*)
 - **Sample Certificate IDs to Verify**:
-  - `NSOC26-WIN-001` (1st Place Winner — Aarav Sharma)
-  - `NSOC26-WIN-002` (1st Place Winner — Diya Patel)
-  - `NSOC26-RUN-001` (2nd Place Runner Up — Rohan Verma)
-  - `NSOC26-PAR-004` (Participation — Ananya Iyer)
-  - `NSOC26-SPK-001` (Speaker & Mentor — Vikram Malhotra)
+  - `NSOC26-WIN-001` (1st Place Winner)
+  - `NSOC26-RUN-002` (2nd Place Runner Up)
+  - `NSOC26-PAR-042` (Participation)
 
 ---
 
