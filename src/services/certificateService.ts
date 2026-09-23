@@ -12,9 +12,14 @@ import QRCode from "qrcode";
 
 const STORAGE_KEY = "nsoc_certificates_v2";
 
-// Clear legacy mock cache if present
-if (typeof window !== "undefined" && localStorage.getItem("nsoc_certificates_cache")) {
-  localStorage.removeItem("nsoc_certificates_cache");
+function stripUndefined<T extends Record<string, any>>(obj: T): any {
+  const clean: Record<string, any> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) {
+      clean[key] = value;
+    }
+  }
+  return clean;
 }
 
 function getLocalCertificates(): Certificate[] {
@@ -57,16 +62,24 @@ export const certificateService = {
     if (isFirebaseConfigured && db) {
       try {
         const querySnapshot = await getDocs(collection(db, "certificates"));
-        return querySnapshot.docs.map((docSnap) => {
-          const d = docSnap.data();
-          return {
-            ...d,
-            id: docSnap.id,
-            issuedAt: d.issuedAt?.toDate ? d.issuedAt.toDate() : d.issuedAt ? new Date(d.issuedAt) : undefined,
-            createdAt: d.createdAt?.toDate ? d.createdAt.toDate() : new Date(d.createdAt),
-            updatedAt: d.updatedAt?.toDate ? d.updatedAt.toDate() : new Date(d.updatedAt),
-          } as Certificate;
-        });
+        if (!querySnapshot.empty) {
+          const firestoreList = querySnapshot.docs.map((docSnap) => {
+            const d = docSnap.data();
+            return {
+              ...d,
+              id: docSnap.id,
+              issuedAt: d.issuedAt?.toDate ? d.issuedAt.toDate() : d.issuedAt ? new Date(d.issuedAt) : undefined,
+              createdAt: d.createdAt?.toDate ? d.createdAt.toDate() : new Date(d.createdAt),
+              updatedAt: d.updatedAt?.toDate ? d.updatedAt.toDate() : new Date(d.updatedAt),
+            } as Certificate;
+          });
+          const firestoreIds = new Set(firestoreList.map((c) => c.id));
+          const localOnly = getLocalCertificates().filter((c) => !firestoreIds.has(c.id));
+          const combined = [...firestoreList, ...localOnly];
+          combined.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          saveLocalCertificates(combined);
+          return combined;
+        }
       } catch (err) {
         console.warn("Firestore fetch certificates failed, falling back to local:", err);
       }
@@ -89,26 +102,25 @@ export const certificateService = {
   async verify(certificateId: string): Promise<{
     result: VerificationResult;
     certificate?: Certificate;
-    message: string;
   }> {
     const cert = await this.getById(certificateId);
+
     if (!cert) {
       return {
         result: "NOT_FOUND",
-        message: "No certificate matching this identifier was found in our official registry.",
       };
     }
+
     if (cert.status === "REVOKED") {
       return {
         result: "REVOKED",
         certificate: cert,
-        message: "This certificate has been revoked by the issuing authority.",
       };
     }
+
     return {
       result: "VALID",
       certificate: cert,
-      message: "Certificate is authentic, verified, and officially on record.",
     };
   },
 
@@ -126,6 +138,7 @@ export const certificateService = {
     let qrCodeDataUrl = "";
     try {
       qrCodeDataUrl = await QRCode.toDataURL(verificationUrl, {
+        width: 250,
         margin: 1,
         color: { dark: "#000000", light: "#ffffff" },
       });
@@ -156,17 +169,17 @@ export const certificateService = {
       updatedAt: new Date(),
     };
 
-    if (isFirebaseConfigured && db) {
-      try {
-        await setDoc(doc(db, "certificates", newCert.id), newCert);
-      } catch (err) {
-        console.warn("Firestore save certificate failed, saving local:", err);
-      }
-    }
-
     const current = getLocalCertificates();
     current.unshift(newCert);
     saveLocalCertificates(current);
+
+    if (isFirebaseConfigured && db) {
+      try {
+        await setDoc(doc(db, "certificates", newCert.id), stripUndefined(newCert));
+      } catch (err) {
+        console.error("Firestore save certificate failed:", err);
+      }
+    }
 
     // Update participant record status
     await participantService.update(params.participantId, {
@@ -186,7 +199,7 @@ export const certificateService = {
       rank?: number;
     }[]
   ): Promise<Certificate[]> {
-    const issued: Certificate[] = [];
+    const certs: Certificate[] = [];
     for (const p of participants) {
       const cert = await this.issueCertificate({
         participantId: p.id,
@@ -195,32 +208,40 @@ export const certificateService = {
         certificateType: p.certificateType,
         rank: p.rank,
       });
-      issued.push(cert);
+      certs.push(cert);
     }
-    return issued;
+    return certs;
   },
 
-  async updateStatus(id: string, status: CertificateStatus): Promise<void> {
-    const updates: Partial<Certificate> = {
-      status,
-      updatedAt: new Date(),
-      ...(status === "REVOKED" ? { revokedAt: new Date() } : {}),
-      ...(status === "REISSUED" ? { reissuedAt: new Date() } : {}),
-    };
+  async updateStatus(
+    id: string,
+    status: CertificateStatus,
+    reason?: string
+  ): Promise<void> {
+    const current = getLocalCertificates();
+    const index = current.findIndex((c) => c.id === id || c.certificateId === id);
+    if (index !== -1) {
+      current[index] = {
+        ...current[index],
+        status,
+        revocationReason: reason,
+        revokedAt: status === "REVOKED" ? new Date() : undefined,
+        updatedAt: new Date(),
+      };
+      saveLocalCertificates(current);
+    }
 
     if (isFirebaseConfigured && db) {
       try {
-        await updateDoc(doc(db, "certificates", id), updates);
+        await updateDoc(doc(db, "certificates", id), stripUndefined({
+          status,
+          revocationReason: reason,
+          revokedAt: status === "REVOKED" ? new Date() : undefined,
+          updatedAt: new Date(),
+        }));
       } catch (err) {
-        console.warn("Firestore update certificate failed:", err);
+        console.error("Firestore update certificate failed:", err);
       }
-    }
-
-    const current = getLocalCertificates();
-    const idx = current.findIndex((c) => c.id === id);
-    if (idx !== -1) {
-      current[idx] = { ...current[idx], ...updates };
-      saveLocalCertificates(current);
     }
   },
 };

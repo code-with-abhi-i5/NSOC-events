@@ -4,9 +4,14 @@ import type { AuditLog } from "@/types";
 
 const STORAGE_KEY = "nsoc_audit_logs_v2";
 
-// Clear legacy mock cache if present
-if (typeof window !== "undefined" && localStorage.getItem("nsoc_audit_logs_cache")) {
-  localStorage.removeItem("nsoc_audit_logs_cache");
+function stripUndefined<T extends Record<string, any>>(obj: T): any {
+  const clean: Record<string, any> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) {
+      clean[key] = value;
+    }
+  }
+  return clean;
 }
 
 function getLocalAuditLogs(): AuditLog[] {
@@ -62,17 +67,18 @@ export const auditService = {
       timestamp: new Date(),
     };
 
-    if (isFirebaseConfigured && db) {
-      try {
-        await setDoc(doc(db, "auditLogs", newLog.id), newLog);
-      } catch (err) {
-        console.warn("Firestore save audit log failed:", err);
-      }
-    }
-
     const current = getLocalAuditLogs();
     current.unshift(newLog);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+
+    if (isFirebaseConfigured && db) {
+      try {
+        await setDoc(doc(db, "auditLogs", newLog.id), stripUndefined(newLog));
+      } catch (err) {
+        console.error("Firestore save audit log failed:", err);
+      }
+    }
+
     return newLog;
   },
 };

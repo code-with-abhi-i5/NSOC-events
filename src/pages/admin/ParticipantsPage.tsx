@@ -26,6 +26,7 @@ export default function ParticipantsPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   // New Participant Form State
@@ -78,13 +79,19 @@ export default function ParticipantsPage() {
 
   const handleAddParticipant = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newName || !newEmail) return;
+    const trimmedName = newName.trim();
+    const trimmedEmail = newEmail.trim().toLowerCase();
+    if (!trimmedName || !trimmedEmail) {
+      showNotification("Please provide both name and email.");
+      return;
+    }
 
+    setIsSubmitting(true);
     try {
       await participantService.add({
-        name: newName,
-        email: newEmail,
-        teamName: newTeam || undefined,
+        name: trimmedName,
+        email: trimmedEmail,
+        teamName: newTeam.trim() || undefined,
         certificateType: newType,
         rank: newRank,
         eventId: "nsoc-2026",
@@ -93,11 +100,15 @@ export default function ParticipantsPage() {
         emailStatus: "PENDING",
       });
 
-      await auditService.log({
-        actor: { userId: "admin", email: "admin@nsoc.dev", displayName: "Admin" },
-        action: "PARTICIPANT_ADDED",
-        details: `Manually added ${newName} (${newEmail})`,
-      });
+      try {
+        await auditService.log({
+          actor: { userId: "admin", email: "admin@nsoc.dev", displayName: "Admin" },
+          action: "PARTICIPANT_ADDED",
+          details: `Manually added ${trimmedName} (${trimmedEmail})`,
+        });
+      } catch (auditErr) {
+        console.warn("Audit log notice:", auditErr);
+      }
 
       setIsAddModalOpen(false);
       setNewName("");
@@ -106,9 +117,14 @@ export default function ParticipantsPage() {
       setNewType("Participation");
       setNewRank(undefined);
       await loadParticipants();
-      showNotification("Participant registered successfully.");
-    } catch (err) {
-      console.error(err);
+      showNotification(`Participant ${trimmedName} registered successfully!`);
+    } catch (err: any) {
+      console.error("Failed to add participant:", err);
+      showNotification(
+        "Error adding participant: " + (err?.message || "Please check console details.")
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -575,9 +591,10 @@ Alex Rivera,alex.r@example.com,Sentinels,Participation,`;
                 </button>
                 <button
                   type="submit"
-                  className="rounded-lg bg-primary px-4 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+                  disabled={isSubmitting}
+                  className="rounded-lg bg-primary px-4 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
                 >
-                  Register
+                  {isSubmitting ? "Registering..." : "Register"}
                 </button>
               </div>
             </form>

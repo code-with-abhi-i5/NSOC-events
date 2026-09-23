@@ -76,6 +76,7 @@ export interface Certificate {
   status: CertificateStatus;
   issuedAt?: Date;
   revokedAt?: Date;
+  revocationReason?: string;
   reissuedAt?: Date;
   pdfUrl?: string;
   verificationUrl: string;

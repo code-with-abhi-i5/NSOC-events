@@ -11,9 +11,14 @@ import type { Participant, ParticipantStatus } from "@/types";
 
 const STORAGE_KEY = "nsoc_participants_v2";
 
-// Clear legacy mock cache if present
-if (typeof window !== "undefined" && localStorage.getItem("nsoc_participants_cache")) {
-  localStorage.removeItem("nsoc_participants_cache");
+function stripUndefined<T extends Record<string, any>>(obj: T): any {
+  const clean: Record<string, any> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) {
+      clean[key] = value;
+    }
+  }
+  return clean;
 }
 
 function getLocalParticipants(): Participant[] {
@@ -42,15 +47,23 @@ export const participantService = {
     if (isFirebaseConfigured && db) {
       try {
         const querySnapshot = await getDocs(collection(db, "participants"));
-        return querySnapshot.docs.map((docSnap) => {
-          const d = docSnap.data();
-          return {
-            ...d,
-            id: docSnap.id,
-            createdAt: d.createdAt?.toDate ? d.createdAt.toDate() : new Date(d.createdAt),
-            updatedAt: d.updatedAt?.toDate ? d.updatedAt.toDate() : new Date(d.updatedAt),
-          } as Participant;
-        });
+        if (!querySnapshot.empty) {
+          const firestoreList = querySnapshot.docs.map((docSnap) => {
+            const d = docSnap.data();
+            return {
+              ...d,
+              id: docSnap.id,
+              createdAt: d.createdAt?.toDate ? d.createdAt.toDate() : new Date(d.createdAt),
+              updatedAt: d.updatedAt?.toDate ? d.updatedAt.toDate() : new Date(d.updatedAt),
+            } as Participant;
+          });
+          const firestoreIds = new Set(firestoreList.map((p) => p.id));
+          const localOnly = getLocalParticipants().filter((p) => !firestoreIds.has(p.id));
+          const combined = [...firestoreList, ...localOnly];
+          combined.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          saveLocalParticipants(combined);
+          return combined;
+        }
       } catch (err) {
         console.warn("Firestore fetch participants failed, falling back to local:", err);
       }
@@ -67,18 +80,20 @@ export const participantService = {
       updatedAt: new Date(),
     };
 
-    if (isFirebaseConfigured && db) {
-      try {
-        await setDoc(doc(db, "participants", id), newParticipant);
-        return newParticipant;
-      } catch (err) {
-        console.warn("Firestore add participant failed, saving local:", err);
-      }
-    }
-
+    // Always update local cache first for instant UI response
     const current = getLocalParticipants();
     current.unshift(newParticipant);
     saveLocalParticipants(current);
+
+    if (isFirebaseConfigured && db) {
+      try {
+        // Strip undefined fields (Firestore throws invalid-argument if undefined is present)
+        await setDoc(doc(db, "participants", id), stripUndefined(newParticipant));
+      } catch (err) {
+        console.error("Firestore add participant failed:", err);
+      }
+    }
+
     return newParticipant;
   },
 
@@ -90,40 +105,39 @@ export const participantService = {
       updatedAt: new Date(),
     }));
 
+    const current = getLocalParticipants();
+    saveLocalParticipants([...items, ...current]);
+
     if (isFirebaseConfigured && db) {
       try {
         for (const item of items) {
-          await setDoc(doc(db, "participants", item.id), item);
+          await setDoc(doc(db, "participants", item.id), stripUndefined(item));
         }
-        return items.length;
       } catch (err) {
-        console.warn("Firestore bulk add failed, saving local:", err);
+        console.error("Firestore bulk add failed:", err);
       }
     }
 
-    const current = getLocalParticipants();
-    saveLocalParticipants([...items, ...current]);
     return items.length;
   },
 
   async update(id: string, updates: Partial<Participant>): Promise<void> {
-    if (isFirebaseConfigured && db) {
-      try {
-        await updateDoc(doc(db, "participants", id), {
-          ...updates,
-          updatedAt: new Date(),
-        });
-        return;
-      } catch (err) {
-        console.warn("Firestore update participant failed, saving local:", err);
-      }
-    }
-
     const current = getLocalParticipants();
     const index = current.findIndex((p) => p.id === id);
     if (index !== -1) {
       current[index] = { ...current[index], ...updates, updatedAt: new Date() };
       saveLocalParticipants(current);
+    }
+
+    if (isFirebaseConfigured && db) {
+      try {
+        await updateDoc(doc(db, "participants", id), stripUndefined({
+          ...updates,
+          updatedAt: new Date(),
+        }));
+      } catch (err) {
+        console.error("Firestore update participant failed:", err);
+      }
     }
   },
 
@@ -132,16 +146,15 @@ export const participantService = {
   },
 
   async delete(id: string): Promise<void> {
+    const current = getLocalParticipants().filter((p) => p.id !== id);
+    saveLocalParticipants(current);
+
     if (isFirebaseConfigured && db) {
       try {
         await deleteDoc(doc(db, "participants", id));
-        return;
       } catch (err) {
-        console.warn("Firestore delete participant failed, removing local:", err);
+        console.error("Firestore delete participant failed:", err);
       }
     }
-
-    const current = getLocalParticipants().filter((p) => p.id !== id);
-    saveLocalParticipants(current);
   },
 };
