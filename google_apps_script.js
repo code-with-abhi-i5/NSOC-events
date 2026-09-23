@@ -4,16 +4,16 @@
  * ==============================================================================
  * 
  * FEATURES:
- * 1. Dispatches beautiful HTML email to participant with their details
- * 2. Generates a HIGH-RESOLUTION PDF CERTIFICATE automatically on the fly
+ * 1. Dispatches beautiful HTML email to participant
+ * 2. Generates a FULL-BLEED, EDGE-TO-EDGE LANDSCAPE PDF CERTIFICATE (Zero white borders)
  * 3. Embeds live Verification QR Code inside the PDF
  * 4. ATTACHES THE PDF DIRECTLY to the outgoing email (100% Free via Gmail quota)
  * 5. Logs every dispatch into Google Sheets for instant audit
  * 
- * HOW TO UPDATE / DEPLOY IN 1 MINUTE:
+ * HOW TO UPDATE IN 1 MINUTE:
  * 1. Open your Google Sheet ("NSOC 2026 Dispatches")
  * 2. Click "Extensions" > "Apps Script"
- * 3. Replace all existing code with this file
+ * 3. Select all (Ctrl+A), delete, and PASTE this entire code
  * 4. Click "Deploy" (top right) > "Manage deployments"
  * 5. Click the pencil (Edit) icon next to your active deployment
  * 6. Under "Version", select "New version"
@@ -37,7 +37,7 @@ function doPost(e) {
     var teamName = data.teamName || "";
     var certId = data.certificateId || "NSOC26-OFFICIAL";
     var certType = data.certificateType || "Certificate of Recognition";
-    var verifyUrl = data.verificationUrl || "https://nsoc-events.vercel.app/verify/" + certId;
+    var verifyUrl = data.verificationUrl || ("https://nsoc-events.vercel.app/verify/" + certId);
 
     if (!email) {
       return ContentService.createTextOutput(
@@ -48,60 +48,97 @@ function doPost(e) {
     var subject = "Official NSOC 2026 Certificate — " + name + " (" + certId + ")";
 
     // 1. Generate QR Code URL
-    var qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=" + encodeURIComponent(verifyUrl);
+    var qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=" + encodeURIComponent(verifyUrl);
 
-    // 2. High-Resolution Landscape PDF Certificate Template
+    // 2. Full-Bleed Edge-to-Edge Landscape PDF Certificate (A4 Landscape: 297mm x 210mm)
     var attachments = [];
     try {
       var certPdfHtml = 
         "<!DOCTYPE html>" +
         "<html><head><meta charset='utf-8'>" +
         "<style>" +
-        "  @page { size: landscape; margin: 10mm; }" +
-        "  body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #0b0f19; color: #ffffff; margin: 0; padding: 15px; -webkit-print-color-adjust: exact; }" +
-        "  .cert-box { border: 4px double #d4af37; background: #111827; border-radius: 14px; padding: 36px 40px; text-align: center; box-sizing: border-box; }" +
-        "  .gold-badge { color: #f59e0b; font-size: 11px; font-weight: bold; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; }" +
-        "  .main-title { font-size: 30px; font-weight: 800; color: #ffffff; letter-spacing: 2px; margin: 0 0 6px 0; text-transform: uppercase; }" +
-        "  .sub-title { font-size: 13px; color: #94a3b8; margin: 0 0 24px 0; letter-spacing: 1px; }" +
-        "  .presented-to { font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; }" +
-        "  .recipient { font-size: 32px; font-weight: bold; color: #fbbf24; margin: 0 0 8px 0; padding-bottom: 6px; border-bottom: 2px solid rgba(245, 158, 11, 0.4); display: inline-block; min-width: 320px; }" +
-        (teamName ? "  .team { font-size: 14px; color: #38bdf8; margin: 6px 0; font-weight: 600; }" : "") +
-        "  .category { display: inline-block; background: #1e1b4b; border: 1px solid #4338ca; color: #a5b4fc; font-size: 13px; font-weight: bold; padding: 5px 18px; border-radius: 20px; margin: 14px 0; }" +
-        "  .statement { font-size: 13px; color: #cbd5e1; line-height: 1.6; max-width: 650px; margin: 8px auto 26px auto; }" +
-        "  .footer-tbl { width: 100%; border-collapse: collapse; margin-top: 15px; }" +
+        "  @page {" +
+        "    size: 297mm 210mm;" +
+        "    margin: 0mm;" +
+        "  }" +
+        "  * {" +
+        "    box-sizing: border-box;" +
+        "    -webkit-print-color-adjust: exact !important;" +
+        "    print-color-adjust: exact !important;" +
+        "  }" +
+        "  html, body {" +
+        "    width: 297mm;" +
+        "    height: 210mm;" +
+        "    margin: 0;" +
+        "    padding: 0;" +
+        "    background-color: #070a12;" +
+        "    color: #ffffff;" +
+        "    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;" +
+        "    overflow: hidden;" +
+        "  }" +
+        "  .cert-container {" +
+        "    width: 297mm;" +
+        "    height: 210mm;" +
+        "    padding: 12mm 15mm;" +
+        "    background: #070a12;" +
+        "    background: radial-gradient(circle at 50% 25%, #151d38 0%, #070a12 100%);" +
+        "    box-sizing: border-box;" +
+        "  }" +
+        "  .cert-frame {" +
+        "    width: 100%;" +
+        "    height: 100%;" +
+        "    border: 3px double #d4af37;" +
+        "    border-radius: 12px;" +
+        "    background: rgba(11, 15, 25, 0.9);" +
+        "    padding: 24px 35px 20px 35px;" +
+        "    box-sizing: border-box;" +
+        "    text-align: center;" +
+        "    box-shadow: inset 0 0 45px rgba(212, 175, 55, 0.15);" +
+        "  }" +
+        "  .badge { color: #f59e0b; font-size: 11px; font-weight: bold; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 6px; }" +
+        "  .main-title { font-size: 32px; font-weight: 800; color: #ffffff; letter-spacing: 2px; margin: 0 0 4px 0; text-transform: uppercase; }" +
+        "  .sub-title { font-size: 12px; color: #94a3b8; margin: 0 0 20px 0; letter-spacing: 1px; }" +
+        "  .presented-to { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; }" +
+        "  .recipient { font-size: 34px; font-weight: bold; color: #fbbf24; margin: 0 0 6px 0; padding-bottom: 6px; border-bottom: 2px solid rgba(245, 158, 11, 0.45); display: inline-block; min-width: 320px; }" +
+        (teamName ? "  .team { font-size: 14px; color: #38bdf8; margin: 4px 0 8px 0; font-weight: 600; }" : "") +
+        "  .category { display: inline-block; background: #1e1b4b; border: 1px solid #4338ca; color: #a5b4fc; font-size: 13px; font-weight: bold; padding: 5px 22px; border-radius: 20px; margin: 12px 0 14px 0; }" +
+        "  .statement { font-size: 12px; color: #cbd5e1; line-height: 1.6; max-width: 680px; margin: 0 auto 22px auto; }" +
+        "  .footer-tbl { width: 100%; border-collapse: collapse; margin-top: 10px; }" +
         "  .footer-col { width: 33.33%; vertical-align: bottom; text-align: center; font-size: 11px; color: #94a3b8; }" +
-        "  .sig-line { border-top: 1px solid #475569; width: 140px; margin: 0 auto 6px auto; }" +
+        "  .sig-line { border-top: 1px solid #475569; width: 150px; margin: 0 auto 6px auto; }" +
         "  .sig-name { font-weight: bold; color: #ffffff; font-size: 12px; }" +
-        "  .qr-code { width: 90px; height: 90px; border-radius: 6px; border: 2px solid #334155; background: #ffffff; padding: 3px; }" +
+        "  .qr-code { width: 85px; height: 85px; border-radius: 6px; border: 2px solid #334155; background: #ffffff; padding: 3px; display: inline-block; }" +
         "  .cert-id-tag { font-family: monospace; font-size: 11px; color: #fbbf24; font-weight: bold; margin-top: 5px; }" +
         "</style></head><body>" +
-        "<div class='cert-box'>" +
-        "  <div class='gold-badge'>National Students Open-Source Conference</div>" +
-        "  <div class='main-title'>Certificate of Recognition</div>" +
-        "  <div class='sub-title'>Official Authorized Credential &bull; NSOC 2026</div>" +
-        "  <div class='presented-to'>This is proudly presented to</div>" +
-        "  <div class='recipient'>" + name + "</div>" +
+        "<div class='cert-container'>" +
+        "  <div class='cert-frame'>" +
+        "    <div class='badge'>National Students Open-Source Conference</div>" +
+        "    <div class='main-title'>Certificate of Recognition</div>" +
+        "    <div class='sub-title'>Official Authorized Credential &bull; NSOC 2026</div>" +
+        "    <div class='presented-to'>This is proudly presented to</div>" +
+        "    <div class='recipient'>" + name + "</div>" +
         (teamName ? "<div class='team'>Team: " + teamName + "</div>" : "") +
-        "  <div><span class='category'>" + certType + "</span></div>" +
-        "  <div class='statement'>For exemplary contribution, technical excellence, and dedication to the open-source ecosystem during NSOC 2026. This certificate is immutably registered on the public registry.</div>" +
-        "  <table class='footer-tbl'>" +
-        "    <tr>" +
-        "      <td class='footer-col'>" +
-        "        <div class='sig-line'></div>" +
-        "        <div class='sig-name'>Dr. Aman Kumar</div>" +
-        "        <div>General Chair, NSOC 2026</div>" +
-        "      </td>" +
-        "      <td class='footer-col'>" +
-        "        <img src='" + qrUrl + "' class='qr-code' alt='Verification QR' />" +
-        "        <div class='cert-id-tag'>" + certId + "</div>" +
-        "      </td>" +
-        "      <td class='footer-col'>" +
-        "        <div class='sig-line'></div>" +
-        "        <div class='sig-name'>23 September 2026</div>" +
-        "        <div>Official Verification Ledger</div>" +
-        "      </td>" +
-        "    </tr>" +
-        "  </table>" +
+        "    <div><span class='category'>" + certType + "</span></div>" +
+        "    <div class='statement'>For exemplary contribution, technical excellence, and dedication to the open-source ecosystem during NSOC 2026. This certificate is immutably registered on the official public verification registry.</div>" +
+        "    <table class='footer-tbl'>" +
+        "      <tr>" +
+        "        <td class='footer-col'>" +
+        "          <div class='sig-line'></div>" +
+        "          <div class='sig-name'>Dr. Aman Kumar</div>" +
+        "          <div>General Chair, NSOC 2026</div>" +
+        "        </td>" +
+        "        <td class='footer-col'>" +
+        "          <img src='" + qrUrl + "' class='qr-code' alt='Verification QR' />" +
+        "          <div class='cert-id-tag'>" + certId + "</div>" +
+        "        </td>" +
+        "        <td class='footer-col'>" +
+        "          <div class='sig-line'></div>" +
+        "          <div class='sig-name'>23 September 2026</div>" +
+        "          <div>Official Verification Ledger</div>" +
+        "        </td>" +
+        "      </tr>" +
+        "    </table>" +
+        "  </div>" +
         "</div></body></html>";
 
       var safeFileName = (name.replace(/[^a-zA-Z0-9]/g, "_") || "Participant") + "_NSOC2026_Certificate.pdf";
@@ -111,7 +148,7 @@ function doPost(e) {
 
       attachments.push(pdfBlob);
     } catch (pdfErr) {
-      Logger.log("PDF Generation Error (Falling back to link only): " + pdfErr);
+      Logger.log("PDF Generation Notice: " + pdfErr);
     }
 
     // 3. Email Body (HTML)
