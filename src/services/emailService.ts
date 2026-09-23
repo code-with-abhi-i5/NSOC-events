@@ -14,7 +14,7 @@ export const emailService = {
     return (
       localStorage.getItem(GAS_URL_KEY) ||
       import.meta.env.VITE_GAS_WEBHOOK_URL ||
-      "https://script.google.com/macros/s/AKfycbxpTFcCJ5ulQP5-WEe6bUiD4TBl1lGptRtcDTqbBQr2-6Iqd8Z4HL0N9XwfkIvZEiy2/exec"
+      "https://script.google.com/macros/s/AKfycbwI6wjX5MGYuG7Zs8z_8PiM2TmxyXrMUTNAtg_NEnGMYjKI7Xo7x_oYvk03q_vFgMM7/exec"
     );
   },
 
