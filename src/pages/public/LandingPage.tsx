@@ -640,10 +640,11 @@ export default function LandingPage() {
                 Go to Verification Terminal
               </Link>
               <Link
-                to="/admin/login"
+                to="/event"
                 className="inline-flex items-center gap-2 rounded-xl border border-border/80 bg-background/80 px-6 py-3.5 text-sm font-semibold text-foreground hover:bg-accent transition-all"
               >
-                Organizer Control Center
+                <Award className="h-4 w-4 text-primary" />
+                Explore Event &amp; Tracks
               </Link>
             </div>
           </div>
