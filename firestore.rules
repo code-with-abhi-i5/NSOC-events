@@ -1,0 +1,71 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (request.auth.token.role == 'ADMIN' || request.auth.token.email.matches('.*@nsoc[.]dev'));
+    }
+
+    function isOrganizer() {
+      return isAuthenticated() &&
+        (request.auth.token.role == 'ORGANIZER' || isAdmin());
+    }
+
+    // Certificates collection
+    // Public can read active certificates for verification
+    match /certificates/{certificateId} {
+      allow read: if true;
+      allow create, update, delete: if isOrganizer() || isAdmin();
+    }
+
+    // Participants collection
+    match /participants/{participantId} {
+      allow read, write: if isOrganizer() || isAdmin();
+    }
+
+    // Templates
+    match /certificateTemplates/{templateId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /emailTemplates/{templateId} {
+      allow read, write: if isOrganizer() || isAdmin();
+    }
+
+    // Campaigns & Email Jobs
+    match /campaigns/{campaignId} {
+      allow read, write: if isOrganizer() || isAdmin();
+    }
+
+    match /emailJobs/{jobId} {
+      allow read, write: if isOrganizer() || isAdmin();
+    }
+
+    // Audit logs
+    match /auditLogs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated();
+      allow update, delete: if false; // Immutable audit trail
+    }
+
+    // Public verification inquiry log
+    match /verificationLogs/{logId} {
+      allow create: if true;
+      allow read: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    // Settings
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}
