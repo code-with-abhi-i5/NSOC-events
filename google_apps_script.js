@@ -34,7 +34,7 @@ function doPost(e) {
     var teamName = data.teamName || "";
     var certId = data.certificateId || "NSOC26-OFFICIAL";
     var certType = data.certificateType || "Certificate of Recognition";
-    var verifyUrl = data.verificationUrl || "https://your-domain.web.app";
+    var verifyUrl = data.verificationUrl || "https://nsoc-events.vercel.app";
 
     if (!email) {
       return ContentService.createTextOutput(
