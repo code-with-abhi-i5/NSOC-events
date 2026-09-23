@@ -9,37 +9,37 @@ export default function SettingsPage() {
   const [organizerName, setOrganizerName] = useState<string>(eventConfig.organizer.name);
   const [contactEmail, setContactEmail] = useState<string>(eventConfig.contactEmail);
   const [certificatePrefix, setCertificatePrefix] = useState<string>("NSOC26");
-  const [gasWebhookUrl, setGasWebhookUrl] = useState<string>("");
   const [saved, setSaved] = useState<boolean>(false);
   const [testSent, setTestSent] = useState<boolean>(false);
-
-  useEffect(() => {
-    setGasWebhookUrl(emailService.getWebhookUrl());
-  }, []);
+  const [testError, setTestError] = useState<string>("");
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    emailService.setWebhookUrl(gasWebhookUrl);
     await auditService.log({
       actor: { userId: "admin", email: "admin@nsoc.dev", displayName: "Admin" },
       action: "SETTINGS_UPDATED",
-      details: "Updated platform settings and Google Apps Script Webhook URL",
+      details: "Updated platform settings",
     });
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };
 
   const handleTestWebhook = async () => {
-    emailService.setWebhookUrl(gasWebhookUrl);
-    await emailService.sendViaAppsScript({
+    setTestError("");
+    const res = await emailService.sendViaAppsScript({
       recipientName: "Admin Test",
       recipientEmail: contactEmail || "admin@nsoc.dev",
       certificateId: `${certificatePrefix}-TEST-001`,
       certificateType: "System Verification",
       verificationUrl: `${window.location.origin}/verify/${certificatePrefix}-TEST-001`,
     });
-    setTestSent(true);
-    setTimeout(() => setTestSent(false), 3500);
+    if (res.success) {
+      setTestSent(true);
+      setTimeout(() => setTestSent(false), 3500);
+    } else {
+      setTestError(res.message);
+      setTimeout(() => setTestError(""), 5000);
+    }
   };
 
   return (
@@ -121,57 +121,55 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* 100% Free Google Apps Script Dispatch Config */}
+        {/* Secure Server-Side Email Backend Config */}
         <div className="rounded-xl border border-primary/30 bg-card p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between border-b border-border/60 pb-3">
             <div className="flex items-center gap-2">
               <Mail className="h-5 w-5 text-indigo-400" />
               <div>
                 <h2 className="text-sm font-semibold text-foreground">
-                  Google Apps Script Email Webhook (100% Free via Gmail)
+                  Secure Server-Side Email Dispatcher (/api/send-email)
                 </h2>
                 <span className="text-[10px] text-emerald-400 font-medium">
-                  Zero Server Costs • 100-1500 Free Emails / Day • No Domain DNS Required
+                  Zero Client-Side API Exposure • Serverless Backend • Free Gmail Quota
                 </span>
               </div>
             </div>
             <button
               type="button"
               onClick={handleTestWebhook}
-              disabled={!gasWebhookUrl}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20 disabled:opacity-40 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors"
             >
               <Send className="h-3 w-3" />
-              Test Webhook Ping
+              Test Dispatch Ping
             </button>
           </div>
 
           <div className="space-y-3 text-xs">
-            <div>
-              <label className="font-medium text-foreground">
-                Google Apps Script Web App Deployment URL
-              </label>
-              <input
-                type="url"
-                placeholder="https://script.google.com/macros/s/AKfycb.../exec"
-                value={gasWebhookUrl}
-                onChange={(e) => setGasWebhookUrl(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-border/60 bg-background px-3 py-2 text-foreground font-mono focus:outline-none focus:ring-1 focus:ring-primary"
-              />
+            <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 shrink-0" />
+                <span>API Endpoint: <code>/api/send-email</code> (Serverless Node Backend)</span>
+              </div>
+              <span className="font-mono text-[10px] bg-emerald-500/20 px-2 py-0.5 rounded">Active &amp; Protected</span>
             </div>
+
+            {testError && (
+              <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400">
+                {testError}
+              </div>
+            )}
 
             <div className="rounded-lg bg-muted/40 p-4 space-y-2 text-[11px] text-muted-foreground border border-border/40">
               <div className="font-semibold text-foreground flex items-center gap-1.5">
                 <ExternalLink className="h-3.5 w-3.5 text-primary" />
-                How to get your free Webhook URL in 2 minutes:
+                Security Architecture:
               </div>
-              <ol className="list-decimal list-inside space-y-1 pl-1">
-                <li>Create a new Google Sheet at <a href="https://sheets.new" target="_blank" rel="noreferrer" className="text-primary underline">sheets.new</a></li>
-                <li>Go to <strong>Extensions &gt; Apps Script</strong></li>
-                <li>Copy the code from <code>google_apps_script.js</code> in this project and paste it</li>
-                <li>Click <strong>Deploy &gt; New deployment &gt; Web app</strong>, set Access to <strong>Anyone</strong>, and click Deploy</li>
-                <li>Copy the Web App URL and paste it into the field above!</li>
-              </ol>
+              <ul className="list-disc list-inside space-y-1 pl-1">
+                <li>No Google Apps Script Webhook URLs or credentials are sent to the client browser.</li>
+                <li>All requests route through Vercel Serverless Function <code>/api/send-email</code>.</li>
+                <li>Your Google Apps Script URL is kept safely in server environment variables (<code>GAS_WEBHOOK_URL</code>).</li>
+              </ul>
             </div>
           </div>
         </div>

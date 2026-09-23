@@ -7,51 +7,35 @@ export interface EmailPayload {
   verificationUrl: string;
 }
 
-const GAS_URL_KEY = "nsoc_gas_webhook_url";
-
 export const emailService = {
-  getWebhookUrl(): string {
-    return (
-      localStorage.getItem(GAS_URL_KEY) ||
-      import.meta.env.VITE_GAS_WEBHOOK_URL ||
-      "https://script.google.com/macros/s/AKfycbwI6wjX5MGYuG7Zs8z_8PiM2TmxyXrMUTNAtg_NEnGMYjKI7Xo7x_oYvk03q_vFgMM7/exec"
-    );
-  },
-
-  setWebhookUrl(url: string) {
-    localStorage.setItem(GAS_URL_KEY, url.trim());
-  },
-
+  /**
+   * Securely dispatches email via server-side backend endpoint (/api/send-email).
+   * No API credentials, webhook URLs, or sensitive tokens are exposed to the client browser.
+   */
   async sendViaAppsScript(payload: EmailPayload): Promise<{ success: boolean; message: string }> {
-    const webhookUrl = this.getWebhookUrl();
-    if (!webhookUrl) {
-      console.warn("Google Apps Script Webhook URL not set. Simulating dispatch.");
-      return {
-        success: true,
-        message: "Email queued (Simulated: Add your Google Apps Script Webhook URL in Settings to send live from Gmail).",
-      };
-    }
-
     try {
-      // Google Apps Script Web Apps require mode 'no-cors' to avoid browser cross-origin redirects being blocked
-      await fetch(webhookUrl, {
+      const response = await fetch("/api/send-email", {
         method: "POST",
-        mode: "no-cors",
         headers: {
-          "Content-Type": "text/plain;charset=utf-8",
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
       });
 
+      if (!response.ok) {
+        const errJson = await response.json().catch(() => ({}));
+        throw new Error(errJson.error || `Server responded with status ${response.status}`);
+      }
+
       return {
         success: true,
-        message: `Email dispatched to ${payload.recipientEmail} via Google Apps Script (Gmail)!`,
+        message: `Email dispatched to ${payload.recipientEmail} via secure server backend!`,
       };
     } catch (err: any) {
-      console.error("Apps Script dispatch error:", err);
+      console.error("Email dispatch error:", err);
       return {
         success: false,
-        message: err?.message || "Failed to trigger Google Apps Script webhook.",
+        message: err?.message || "Failed to trigger serverless email backend.",
       };
     }
   },
@@ -62,7 +46,7 @@ export const emailService = {
       const res = await this.sendViaAppsScript(item);
       if (res.success) sent++;
       // Small pause to prevent burst limits
-      await new Promise((r) => setTimeout(r, 200));
+      await new Promise((r) => setTimeout(r, 250));
     }
     return { total: items.length, sent };
   },
