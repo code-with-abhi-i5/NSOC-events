@@ -47,23 +47,19 @@ export const participantService = {
     if (isFirebaseConfigured && db) {
       try {
         const querySnapshot = await getDocs(collection(db, "participants"));
-        if (!querySnapshot.empty) {
-          const firestoreList = querySnapshot.docs.map((docSnap) => {
-            const d = docSnap.data();
-            return {
-              ...d,
-              id: docSnap.id,
-              createdAt: d.createdAt?.toDate ? d.createdAt.toDate() : new Date(d.createdAt),
-              updatedAt: d.updatedAt?.toDate ? d.updatedAt.toDate() : new Date(d.updatedAt),
-            } as Participant;
-          });
-          const firestoreIds = new Set(firestoreList.map((p) => p.id));
-          const localOnly = getLocalParticipants().filter((p) => !firestoreIds.has(p.id));
-          const combined = [...firestoreList, ...localOnly];
-          combined.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-          saveLocalParticipants(combined);
-          return combined;
-        }
+        const firestoreList = querySnapshot.docs.map((docSnap) => {
+          const d = docSnap.data();
+          return {
+            ...d,
+            id: docSnap.id,
+            createdAt: d.createdAt?.toDate ? d.createdAt.toDate() : new Date(d.createdAt),
+            updatedAt: d.updatedAt?.toDate ? d.updatedAt.toDate() : new Date(d.updatedAt),
+          } as Participant;
+        });
+        firestoreList.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        // Directly sync local storage with Firestore source of truth
+        saveLocalParticipants(firestoreList);
+        return firestoreList;
       } catch (err) {
         console.warn("Firestore fetch participants failed, falling back to local:", err);
       }
