@@ -228,6 +228,11 @@ export default function ParticipantsPage() {
     for (const id of selectedIds) {
       await participantService.delete(id);
     }
+    await auditService.log({
+      actor: { userId: "admin", email: "admin@nsoc.dev", displayName: "Admin" },
+      action: "PARTICIPANTS_DELETED",
+      details: `Removed ${selectedIds.length} participant(s) from registry`,
+    });
     setSelectedIds([]);
     await loadParticipants();
     showNotification("Selected participants removed.");

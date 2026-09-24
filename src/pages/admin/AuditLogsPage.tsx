@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Download } from "lucide-react";
+import { Search, Download, RefreshCw } from "lucide-react";
 import { auditService } from "@/services/auditService";
 import type { AuditLog } from "@/types";
 
@@ -8,27 +8,29 @@ export default function AuditLogsPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      try {
-        const data = await auditService.getAll();
-        setLogs(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
+  async function load() {
+    setLoading(true);
+    try {
+      const data = await auditService.getAll();
+      setLogs(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
+  }
+
+  useEffect(() => {
     load();
   }, []);
 
   const filteredLogs = logs.filter(
     (l) =>
-      l.action.toLowerCase().includes(search.toLowerCase()) ||
+      l.action?.toLowerCase().includes(search.toLowerCase()) ||
       (l.details && l.details.toLowerCase().includes(search.toLowerCase())) ||
       (l.target && l.target.toLowerCase().includes(search.toLowerCase())) ||
-      l.actor.email.toLowerCase().includes(search.toLowerCase())
+      (l.actor?.email && l.actor.email.toLowerCase().includes(search.toLowerCase())) ||
+      (l.actor?.displayName && l.actor.displayName.toLowerCase().includes(search.toLowerCase()))
   );
 
   const handleExport = () => {
@@ -37,7 +39,7 @@ export default function AuditLogsPage() {
       filteredLogs
         .map(
           (l) =>
-            `"${new Date(l.timestamp).toISOString()}","${l.action}","${l.actor.email}","${l.target || ""}","${l.details || ""}","${l.result}"`
+            `"${new Date(l.timestamp).toISOString()}","${l.action}","${l.actor?.email || "system"}","${l.target || ""}","${(l.details || "").replace(/"/g, '""')}","${l.result}"`
         )
         .join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -61,13 +63,24 @@ export default function AuditLogsPage() {
           </p>
         </div>
 
-        <button
-          onClick={handleExport}
-          className="inline-flex items-center gap-2 rounded-lg border border-border/80 bg-secondary/60 px-3.5 py-2 text-xs font-semibold text-foreground hover:bg-secondary transition-colors"
-        >
-          <Download className="h-4 w-4" />
-          Export Audit Log CSV
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={load}
+            disabled={loading}
+            className="inline-flex items-center gap-2 rounded-lg border border-border/80 bg-secondary/60 px-3.5 py-2 text-xs font-semibold text-foreground hover:bg-secondary disabled:opacity-50 transition-colors"
+            title="Refresh Audit Logs"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </button>
+          <button
+            onClick={handleExport}
+            className="inline-flex items-center gap-2 rounded-lg border border-border/80 bg-secondary/60 px-3.5 py-2 text-xs font-semibold text-foreground hover:bg-secondary transition-colors"
+          >
+            <Download className="h-4 w-4" />
+            Export Audit Log CSV
+          </button>
+        </div>
       </div>
 
       {/* Search Bar */}
@@ -122,13 +135,13 @@ export default function AuditLogsPage() {
                     </span>
                   </td>
                   <td className="px-5 py-3.5">
-                    <div className="font-medium text-foreground">{log.actor.displayName}</div>
-                    <div className="text-[11px] text-muted-foreground">{log.actor.email}</div>
+                    <div className="font-medium text-foreground">{log.actor?.displayName || "Administrator"}</div>
+                    <div className="text-[11px] text-muted-foreground">{log.actor?.email || "admin@nsoc.dev"}</div>
                   </td>
                   <td className="px-5 py-3.5 font-mono text-xs text-amber-400">
                     {log.target || "—"}
                   </td>
-                  <td className="px-5 py-3.5 text-muted-foreground max-w-xs truncate">
+                  <td className="px-5 py-3.5 text-muted-foreground max-w-xs truncate" title={log.details || ""}>
                     {log.details || "—"}
                   </td>
                   <td className="px-5 py-3.5 text-right">
