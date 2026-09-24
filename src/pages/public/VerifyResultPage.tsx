@@ -10,7 +10,6 @@ import {
   Copy,
   ArrowLeft,
   QrCode,
-  Printer,
   Check,
   Lock,
   MessageCircle,
@@ -72,10 +71,6 @@ export default function VerifyResultPage() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
-  };
-
-  const handlePrint = () => {
-    window.print();
   };
 
   // Social Share Handlers
@@ -345,14 +340,6 @@ export default function VerifyResultPage() {
 
           {/* Quick Actions */}
           <div className="flex items-center gap-2">
-            <button
-              onClick={handlePrint}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground shadow-lg hover:bg-primary/90 transition-all hover:scale-[1.02]"
-              title="Print or Save as PDF"
-            >
-              <Printer className="h-4 w-4" />
-              Print / Save PDF
-            </button>
             <button
               onClick={handleCopy}
               className="inline-flex items-center gap-1.5 rounded-xl border border-border/80 bg-secondary/80 px-3.5 py-2.5 text-xs font-semibold text-foreground hover:bg-secondary transition-all"
