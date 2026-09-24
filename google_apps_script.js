@@ -45,7 +45,7 @@ function doPost(e) {
       ).setMimeType(ContentService.MimeType.JSON);
     }
 
-    var subject = "Official CODE-A-THON 2.0 Certificate — " + name + " (" + certId + ")";
+    var subject = "Official CODE-A-THON 2.0 Certificate: " + name + " [" + certId + "]";
 
     // 1. Generate QR Code URL
     var qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=" + encodeURIComponent(verifyUrl) + "&bgcolor=ffffff&color=0c1a3a";
@@ -168,44 +168,127 @@ function doPost(e) {
     }
 
     // 3. Email Body (HTML)
+    // 3. Email Body (Ultra-Premium HTML, Zero Character Encoding Issues)
     var htmlBody = 
-      "<div style='font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif; background-color: #0b0f19; color: #f1f5f9; padding: 40px 20px; border-radius: 12px; max-width: 580px; margin: 0 auto;'>" +
-        "<div style='text-align: center; margin-bottom: 28px;'>" +
-        "  <span style='background: rgba(37, 99, 235, 0.2); color: #60a5fa; font-size: 11px; font-weight: 700; letter-spacing: 2px; padding: 4px 12px; border-radius: 20px; text-transform: uppercase;'>Official Credential</span>" +
-        "  <h1 style='color: #ffffff; font-size: 26px; margin: 12px 0 4px 0; letter-spacing: -0.5px;'>CODE-A-THON 2.0</h1>" +
-        "  <p style='color: #94a3b8; font-size: 13px; margin: 0;'>Nexus Spring of Code</p>" +
-        "</div>" +
+      "<table role='presentation' width='100%' cellpadding='0' cellspacing='0' border='0' style='background-color: #060913; margin: 0; padding: 30px 10px; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif;'>" +
+      "  <tr>" +
+      "    <td align='center'>" +
+      "      <table role='presentation' width='100%' cellpadding='0' cellspacing='0' border='0' style='max-width: 600px; background-color: #0d1527; border-radius: 16px; border: 1px solid #1e2e4a; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);'>" +
 
-        "<div style='background: #111827; border: 1px solid #1f2937; border-radius: 10px; padding: 24px; margin-bottom: 24px;'>" +
-        "  <p style='font-size: 15px; color: #e2e8f0; margin-top: 0;'>Dear <strong>" + name + "</strong>,</p>" +
-        "  <p style='font-size: 14px; color: #cbd5e1; line-height: 1.6;'>" +
-        "    Congratulations on your active participation in <strong>CODE-A-THON 2.0 – 24-Hour Hackathon</strong>! " +
-        "    Your official digital certificate has been issued and registered on the verification portal." +
-        "  </p>" +
+      "        <!-- Top Header & Branding -->" +
+      "        <tr>" +
+      "          <td style='background: linear-gradient(135deg, #090e1a 0%, #1e3a8a 50%, #090e1a 100%); padding: 36px 30px 28px 30px; text-align: center; border-bottom: 1px solid #1e3a8a;'>" +
+      "            <div style='margin-bottom: 14px;'>" +
+      "              <img src='https://avatars.githubusercontent.com/u/264619437?s=280' width='54' height='54' alt='Nexus' style='border-radius: 12px; border: 2px solid rgba(255,255,255,0.25); display: inline-block; vertical-align: middle;' />" +
+      "            </div>" +
+      "            <div>" +
+      "              <span style='display: inline-block; background-color: rgba(37, 99, 235, 0.25); border: 1px solid #3b82f6; color: #93c5fd; font-size: 11px; font-weight: 800; letter-spacing: 2px; padding: 4px 14px; border-radius: 50px; text-transform: uppercase;'>" +
+      "                Official Digital Credential" +
+      "              </span>" +
+      "            </div>" +
+      "            <h1 style='color: #ffffff; font-size: 32px; font-weight: 900; letter-spacing: 1px; margin: 16px 0 6px 0; text-transform: uppercase; line-height: 1.1;'>" +
+      "              CODE-A-THON <span style='color: #60a5fa;'>2.0</span>" +
+      "            </h1>" +
+      "            <p style='color: #94a3b8; font-size: 13px; font-weight: 600; letter-spacing: 2px; margin: 0; text-transform: uppercase;'>" +
+      "              24-Hour Hackathon | Nexus Spring of Code" +
+      "            </p>" +
+      "          </td>" +
+      "        </tr>" +
 
-        "  <div style='background: #1e293b; border-left: 4px solid #2563eb; border-radius: 6px; padding: 14px 18px; margin: 20px 0;'>" +
-        "    <div style='font-size: 11px; text-transform: uppercase; color: #94a3b8; letter-spacing: 1px;'>Certificate Identifier</div>" +
-        "    <div style='font-size: 20px; font-family: monospace; font-weight: bold; color: #facc15; margin-top: 2px;'>" + certId + "</div>" +
-        (teamName ? "    <div style='font-size: 12px; color: #38bdf8; margin-top: 4px;'>Team: " + teamName + "</div>" : "") +
-        "    <div style='font-size: 12px; color: #cbd5e1; margin-top: 2px;'>Category: " + certType + "</div>" +
-        "  </div>" +
+      "        <!-- Main Content -->" +
+      "        <tr>" +
+      "          <td style='padding: 32px 30px;'>" +
+      "            <p style='color: #f1f5f9; font-size: 17px; font-weight: 700; margin: 0 0 14px 0;'>" +
+      "              Dear " + name + "," +
+      "            </p>" +
+      "            <p style='color: #cbd5e1; font-size: 14px; line-height: 1.7; margin: 0 0 24px 0;'>" +
+      "              Congratulations on your outstanding performance in <strong>CODE-A-THON 2.0 (24-Hour Hackathon)</strong> organized by <strong>Nexus Spring of Code</strong> in collaboration with <strong>Sigma Fusion, Meander, DSO, and Macbease</strong>. Your dedication and technical innovation have been officially verified and recorded." +
+      "            </p>" +
 
-        "  <div style='background: rgba(16, 185, 129, 0.1); border: 1px dashed rgba(16, 185, 129, 0.4); border-radius: 8px; padding: 12px; text-align: center; margin: 18px 0;'>" +
-        "    <span style='color: #34d399; font-size: 13px; font-weight: 600;'>📎 Official PDF Certificate Attached</span>" +
-        "    <p style='font-size: 11px; color: #94a3b8; margin: 4px 0 0 0;'>You can download or view your official landscape certificate directly from this email attachment.</p>" +
-        "  </div>" +
+      "            <!-- Credential Info Box -->" +
+      "            <table role='presentation' width='100%' cellpadding='0' cellspacing='0' border='0' style='background-color: #111a2e; border: 1px solid #1e2e4a; border-radius: 12px; margin-bottom: 24px; overflow: hidden;'>" +
+      "              <tr>" +
+      "                <td style='padding: 20px;'>" +
+      "                  <div style='font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px;'>" +
+      "                    Certificate Identifier" +
+      "                  </div>" +
+      "                  <div style='font-size: 22px; font-family: monospace; font-weight: 900; color: #fbbf24; letter-spacing: 1px; margin-bottom: 16px;'>" +
+      certId +
+      "                  </div>" +
 
-        "  <div style='text-align: center; margin: 24px 0 10px 0;'>" +
-        "    <a href='" + verifyUrl + "' style='background: linear-gradient(135deg, #1d4ed8, #2563eb); color: #ffffff; padding: 14px 32px; font-size: 14px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);'>" +
-        "      Verify Online" +
-        "    </a>" +
-        "  </div>" +
-        "</div>" +
+      "                  <table role='presentation' width='100%' cellpadding='4' cellspacing='0' border='0' style='font-size: 13px; border-top: 1px solid #1e2e4a; padding-top: 12px;'>" +
+      "                    <tr>" +
+      "                      <td style='color: #94a3b8; width: 35%; padding: 6px 0;'>Recipient:</td>" +
+      "                      <td style='color: #ffffff; font-weight: 700; padding: 6px 0;'>" + name + "</td>" +
+      "                    </tr>" +
+      (teamName ? "                    <tr><td style='color: #94a3b8; padding: 6px 0;'>Team:</td><td style='color: #38bdf8; font-weight: 700; padding: 6px 0;'>" + teamName + "</td></tr>" : "") +
+      "                    <tr>" +
+      "                      <td style='color: #94a3b8; padding: 6px 0;'>Category:</td>" +
+      "                      <td style='color: #e2e8f0; font-weight: 600; padding: 6px 0;'>" + certType + "</td>" +
+      "                    </tr>" +
+      "                    <tr>" +
+      "                      <td style='color: #94a3b8; padding: 6px 0;'>Status:</td>" +
+      "                      <td style='color: #34d399; font-weight: 700; padding: 6px 0;'>Active &amp; Authenticated</td>" +
+      "                    </tr>" +
+      "                  </table>" +
+      "                </td>" +
+      "              </tr>" +
+      "            </table>" +
 
-        "<p style='font-size: 11px; color: #64748b; text-align: center; margin-bottom: 0;'>" +
-        "  Automated credential dispatch &bull; Online Verification: " + verifyUrl +
-        "</p>" +
-      "</div>";
+      "            <!-- PDF Attachment Highlight Banner -->" +
+      "            <table role='presentation' width='100%' cellpadding='0' cellspacing='0' border='0' style='background-color: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 10px; margin-bottom: 28px;'>" +
+      "              <tr>" +
+      "                <td style='padding: 14px 18px;'>" +
+      "                  <span style='display: inline-block; background-color: #059669; color: #ffffff; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; margin-right: 8px;'>" +
+      "                    PDF Attached" +
+      "                  </span>" +
+      "                  <strong style='color: #34d399; font-size: 13px;'>Official Landscape Certificate Included</strong>" +
+      "                  <p style='color: #94a3b8; font-size: 12px; margin: 4px 0 0 0; line-height: 1.5;'>" +
+      "                    Your high-resolution PDF certificate with digital signatures and QR verification is attached directly to this email." +
+      "                  </p>" +
+      "                </td>" +
+      "              </tr>" +
+      "            </table>" +
+
+      "            <!-- CTA Button -->" +
+      "            <table role='presentation' width='100%' cellpadding='0' cellspacing='0' border='0' style='margin-bottom: 24px;'>" +
+      "              <tr>" +
+      "                <td align='center'>" +
+      "                  <a href='" + verifyUrl + "' style='background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%); color: #ffffff; text-decoration: none; padding: 16px 36px; border-radius: 10px; font-size: 14px; font-weight: 800; letter-spacing: 0.5px; display: inline-block; text-transform: uppercase; box-shadow: 0 4px 20px rgba(37, 99, 235, 0.45); border: 1px solid #3b82f6;'>" +
+      "                    Verify Certificate Online" +
+      "                  </a>" +
+      "                </td>" +
+      "              </tr>" +
+      "            </table>" +
+
+      "            <p style='color: #64748b; font-size: 11px; text-align: center; margin: 0; line-height: 1.6;'>" +
+      "              Direct Verification URL:<br />" +
+      "              <a href='" + verifyUrl + "' style='color: #38bdf8; text-decoration: underline; word-break: break-all;'>" + verifyUrl + "</a>" +
+      "            </p>" +
+      "          </td>" +
+      "        </tr>" +
+
+      "        <!-- Signatures & Partners Footer -->" +
+      "        <tr>" +
+      "          <td style='background-color: #080d19; padding: 24px 30px; border-top: 1px solid #1e293b; text-align: center;'>" +
+      "            <p style='font-size: 11px; color: #94a3b8; line-height: 1.6; margin: 0 0 8px 0;'>" +
+      "              <strong style='color: #e2e8f0;'>Nexus Spring of Code</strong> | " +
+      "              In collaboration with <strong style='color: #cbd5e1;'>Sigma Fusion, Meander, DSO, Macbease</strong>" +
+      "            </p>" +
+      "            <p style='font-size: 10px; color: #64748b; margin: 0 0 12px 0;'>" +
+      "              Signatories: Aman Singh (Founder) &bull; Dr. R. K. Sharma (Dean, Student Welfare)" +
+      "            </p>" +
+      "            <p style='color: #475569; font-size: 10px; margin: 0; line-height: 1.5;'>" +
+      "              Automated credential dispatch from the official NSOC verification registry.<br />" +
+      "              All rights reserved &copy; 2026 Nexus Spring of Code." +
+      "            </p>" +
+      "          </td>" +
+      "        </tr>" +
+
+      "      </table>" +
+      "    </td>" +
+      "  </tr>" +
+      "</table>";
 
     // 4. Send Email with Attachment (Using native Gmail Quota - 100% Free)
     var mailOptions = {

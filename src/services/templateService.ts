@@ -77,7 +77,17 @@ export const templateService = {
       localStorage.setItem(EMAIL_TPL_KEY, JSON.stringify(INITIAL_EMAIL_TEMPLATES));
       return INITIAL_EMAIL_TEMPLATES;
     }
-    return JSON.parse(data);
+    try {
+      const parsed: EmailTemplate[] = JSON.parse(data);
+      if (!parsed.some((t) => t.id === "etpl-codeathon-20")) {
+        localStorage.setItem(EMAIL_TPL_KEY, JSON.stringify(INITIAL_EMAIL_TEMPLATES));
+        return INITIAL_EMAIL_TEMPLATES;
+      }
+      return parsed;
+    } catch {
+      localStorage.setItem(EMAIL_TPL_KEY, JSON.stringify(INITIAL_EMAIL_TEMPLATES));
+      return INITIAL_EMAIL_TEMPLATES;
+    }
   },
 
   async saveEmailTemplate(template: EmailTemplate): Promise<void> {
