@@ -12,7 +12,13 @@ export const templateService = {
       try {
         const querySnapshot = await getDocs(collection(db, "certificateTemplates"));
         if (!querySnapshot.empty) {
-          return querySnapshot.docs.map((d) => d.data() as CertificateTemplate);
+          const list = querySnapshot.docs.map((d) => d.data() as CertificateTemplate);
+          const codeathon = list.find((t) => t.id === "tpl-codeathon-20");
+          if (codeathon) {
+            return [codeathon, ...list.filter((t) => t.id !== "tpl-codeathon-20")];
+          }
+          // If Firestore only has old legacy templates, place our official CODE-A-THON 2.0 first
+          return [...INITIAL_CERTIFICATE_TEMPLATES, ...list];
         }
       } catch (err) {
         console.warn("Firestore cert templates fetch error, using local:", err);
@@ -23,7 +29,18 @@ export const templateService = {
       localStorage.setItem(CERT_TPL_KEY, JSON.stringify(INITIAL_CERTIFICATE_TEMPLATES));
       return INITIAL_CERTIFICATE_TEMPLATES;
     }
-    return JSON.parse(data);
+    try {
+      const parsed: CertificateTemplate[] = JSON.parse(data);
+      if (!parsed.some((t) => t.id === "tpl-codeathon-20")) {
+        // Automatically upgrade existing user sessions to official CODE-A-THON 2.0 template
+        localStorage.setItem(CERT_TPL_KEY, JSON.stringify(INITIAL_CERTIFICATE_TEMPLATES));
+        return INITIAL_CERTIFICATE_TEMPLATES;
+      }
+      return parsed;
+    } catch {
+      localStorage.setItem(CERT_TPL_KEY, JSON.stringify(INITIAL_CERTIFICATE_TEMPLATES));
+      return INITIAL_CERTIFICATE_TEMPLATES;
+    }
   },
 
   async saveCertificateTemplate(template: CertificateTemplate): Promise<void> {

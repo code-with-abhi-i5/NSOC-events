@@ -109,46 +109,71 @@ export default function VerifyResultPage() {
   const compiledCertDoc = useMemo(() => {
     if (!certificate) return "";
 
-    const rawHtml = template?.htmlContent || `<div class="cert-card">
-      <div class="cert-border">
-        <h1>CERTIFICATE OF RECOGNITION</h1>
-        <h2>{{recipient_name}}</h2>
-        <div class="award">{{certificate_type}}</div>
-        <p>{{contribution_details}}</p>
-        <div class="footer">
-          <div>{{signatory_name}}<br>{{signatory_title}}</div>
-          <img src="{{qr_code_url}}" class="qr" />
-          <div>{{issue_date}}<br>ID: {{certificate_id}}</div>
-        </div>
-      </div>
-    </div>`;
-
+    const rawHtml = template?.htmlContent || "";
     const rawCss = template?.cssContent || "";
 
-    const qrUrl = certificate.qrCodeDataUrl || `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(certificate.verificationUrl)}`;
+    const qrUrl =
+      certificate.qrCodeDataUrl ||
+      `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(
+        certificate.verificationUrl
+      )}&bgcolor=ffffff&color=0c1a3a`;
+
+    let subType = certificate.certificateType ? certificate.certificateType.toUpperCase() : "OF PARTICIPATION";
+    if (!subType.startsWith("OF ")) {
+      subType = "OF " + subType;
+    }
+
+    const teamHtml = certificate.teamName
+      ? `<div class="team" style="font-size: 13px; font-weight: 700; color: #2563eb; margin-top: 4px;">Team: ${certificate.teamName}</div>`
+      : "";
 
     let html = rawHtml;
+
+    // Dynamically replace recipient name (including any template dummy name like Mayank Gupta)
     html = html.replace(/{{recipient_name}}/gi, certificate.participantName);
-    html = html.replace(/{{certificate_type}}/gi, certificate.certificateType);
-    html = html.replace(/{{contribution_details}}/gi, certificate.contributionDetails || "In formal recognition of distinguished contribution and exemplary performance in NSOC 2026.");
-    html = html.replace(/{{signatory_name}}/gi, certificate.organizerName || "Dr. Aman Kumar");
-    html = html.replace(/{{signatory_title}}/gi, certificate.signature || "General Chair, NSOC 2026");
+    html = html.replace(/Mayank Gupta/g, certificate.participantName);
+
+    // Dynamically replace Certificate ID
     html = html.replace(/{{certificate_id}}/gi, certificate.certificateId);
-    html = html.replace(/{{issue_date}}/gi, certificate.issuedAt ? formatDate(certificate.issuedAt) : "23 September 2026");
+    html = html.replace(/NSOC26-PAR-00108/g, certificate.certificateId);
+
+    // Dynamically replace QR code and verification target
     html = html.replace(/{{qr_code_url}}/gi, qrUrl);
+    html = html.replace(/CODEATHON-2\.0-CERT/g, encodeURIComponent(certificate.verificationUrl));
+
+    // Dynamically replace certificate type & category
+    html = html.replace(/{{certificate_type_sub}}/gi, subType);
+    html = html.replace(/{{certificate_type}}/gi, certificate.certificateType || "Certificate of Participation");
+    html = html.replace(/OF PARTICIPATION/g, subType);
+
+    // Team name
+    html = html.replace(/{{team_block}}/gi, teamHtml);
+    html = html.replace(/{{team_name}}/gi, certificate.teamName || "");
+
+    // Signatories & event details
+    html = html.replace(/{{signatory_name}}/gi, certificate.organizerName || "Aman Singh");
+    html = html.replace(/{{signatory_title}}/gi, certificate.signature || "Founder, Nexus Spring of Code");
+    html = html.replace(
+      /{{contribution_details}}/gi,
+      certificate.contributionDetails || "for actively participating in CODE-A-THON 2.0 – 24-Hour Hackathon"
+    );
+    html = html.replace(
+      /{{issue_date}}/gi,
+      certificate.issuedAt ? formatDate(certificate.issuedAt) : "25–26 September 2026"
+    );
 
     if (html.toLowerCase().includes("<html") || html.toLowerCase().includes("<!doctype")) {
       return html;
     }
 
     return `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;800;900&family=Playfair+Display:ital,wght@0,600;0,800;1,600&family=Montserrat:wght@400;500;600;700;800&family=Alex+Brush&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after {
       box-sizing: border-box;
@@ -163,6 +188,7 @@ export default function VerifyResultPage() {
       justify-content: center;
       align-items: center;
       overflow: hidden;
+      font-family: 'Inter', system-ui, sans-serif;
     }
     ${rawCss}
   </style>
@@ -421,17 +447,17 @@ export default function VerifyResultPage() {
               <div
                 style={{
                   width: `${1000 * certScale}px`,
-                  height: `${700 * certScale}px`,
+                  height: `${708 * certScale}px`,
                   transition: "width 0.15s ease, height 0.15s ease",
                 }}
-                className="relative rounded-2xl overflow-hidden shadow-[0_20px_60px_-15px_rgba(0,0,0,0.9)] border border-amber-500/30 flex-shrink-0"
+                className="relative rounded-2xl overflow-hidden shadow-[0_20px_60px_-15px_rgba(0,0,0,0.9)] border border-blue-500/30 flex-shrink-0"
               >
                 <iframe
                   title="Official Verified Certificate"
                   srcDoc={compiledCertDoc}
                   style={{
                     width: "1000px",
-                    height: "700px",
+                    height: "708px",
                     transform: `scale(${certScale})`,
                     transformOrigin: "top left",
                     border: "none",

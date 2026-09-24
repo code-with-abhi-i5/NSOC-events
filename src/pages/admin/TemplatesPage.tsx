@@ -244,13 +244,20 @@ export default function TemplatesPage() {
     const qrUrl = sampleQrCode || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect width='100' height='100' fill='black'/></svg>";
 
     rawHtml = rawHtml.replace(/{{recipient_name}}/gi, sampleRecipient);
+    rawHtml = rawHtml.replace(/Mayank Gupta/g, sampleRecipient);
+    rawHtml = rawHtml.replace(/{{certificate_type_sub}}/gi, "OF PARTICIPATION");
     rawHtml = rawHtml.replace(/{{certificate_type}}/gi, sampleTrack);
+    rawHtml = rawHtml.replace(/OF PARTICIPATION/g, "OF PARTICIPATION");
+    rawHtml = rawHtml.replace(/{{team_block}}/gi, "");
+    rawHtml = rawHtml.replace(/{{team_name}}/gi, "");
     rawHtml = rawHtml.replace(/{{contribution_details}}/gi, sampleDetails);
     rawHtml = rawHtml.replace(/{{signatory_name}}/gi, sampleSignatory);
     rawHtml = rawHtml.replace(/{{signatory_title}}/gi, sampleSignatoryTitle);
     rawHtml = rawHtml.replace(/{{certificate_id}}/gi, sampleCertId);
+    rawHtml = rawHtml.replace(/NSOC26-PAR-00108/g, sampleCertId);
     rawHtml = rawHtml.replace(/{{issue_date}}/gi, sampleIssueDate);
     rawHtml = rawHtml.replace(/{{qr_code_url}}/gi, qrUrl);
+    rawHtml = rawHtml.replace(/CODEATHON-2\.0-CERT/g, encodeURIComponent(`https://nsoc-events.vercel.app/verify/${sampleCertId}`));
 
     // If user pasted a full HTML document
     if (rawHtml.toLowerCase().includes("<html") || rawHtml.toLowerCase().includes("<!doctype")) {
